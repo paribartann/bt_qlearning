@@ -38,12 +38,14 @@ EnvClass::EnvClass( std::string self_id )
     self_id_ = self_id;
     targetVisible = false;
     orientation = WEST;
-    height = 0;
+    height = 1;
 
     count = 0;
 
-    initialWayPoint = wayPointMap[4];
-    currentWayPoint = wayPointMap[4];
+    cout<<wayPointMap[0].i<<" "<<wayPointMap[0].j<<endl;
+
+    initialWayPoint = wayPointMap[0];
+    currentWayPoint = wayPointMap[0];
 
     rotate_status = IDLE;
     rotate_counter = 0;
@@ -67,7 +69,7 @@ void EnvClass::settingEnvironment()
     {
         for (int j = 0; j < 5; j++)
         {
-            q_table[i][j] = 0;
+            q_table[i][j] = 0.0;
         }
     }
 
@@ -88,7 +90,6 @@ void EnvClass::settingEnvironment()
     wayPointMap[2] = Index(0,6);
     wayPointMap[3] = Index(3,8);
     wayPointMap[4] = Index(8,7);
-
 
     q_wayPointMap[Index(6,2)] = 0;
     q_wayPointMap[Index(3,2)] = 1;
@@ -115,8 +116,7 @@ void EnvClass::settingEnvironment()
 void EnvClass::printEnvironment()
 {   
     cout<<"\n";
-    cout<<"HEREEEEEE == "<<q_wayPointMap[currentWayPoint]<<endl;
-    cout<<"Q_TABLE == "<<q_table[q_wayPointMap[currentWayPoint]][prev_child]<<endl;
+    
     for (int i = 0; i < 10; i++)
     {
         for (int j = 0; j < 10; j++)
@@ -165,14 +165,9 @@ ReturnStatus EnvClass::end_episode()
 
 
     /* Q-Learning Code Goes here */
-
-    /*
-    q[s][a]
-    q_table[currentWayPoint.key][prev_child] += ALPHA(10 - q_table[currentWayPoint.key][prev_child] );
-    */
-
-
     q_table[ q_wayPointMap[currentWayPoint] ][prev_child] += ALPHA * ( 10 - q_table[ q_wayPointMap[currentWayPoint] ][prev_child]);
+
+   
 
     currentWayPoint = initialWayPoint;
 

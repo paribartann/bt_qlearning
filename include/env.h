@@ -41,12 +41,13 @@ namespace tree{
     {
         private:
             char env[10][10];
-            int q_table[5][5];
+            double q_table[5][5];
             enum direction {EAST, WEST, NORTH, SOUTH} ;
             direction orientation;
             
             std::map<int, Index> wayPointMap;
             std::map<Index, int> q_wayPointMap;
+
             Index initialWayPoint;
             Index currentWayPoint;
 
