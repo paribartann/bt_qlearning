@@ -78,6 +78,7 @@ namespace tree{
             unsigned int curr_child;
             unsigned int prev_child;
 
+            int index;      //for random index
             /****************action*********************/
             ReturnStatus rotate();
             ReturnStatus elevate();

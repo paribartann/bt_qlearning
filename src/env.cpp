@@ -18,6 +18,7 @@
 
 #include <iostream>
 #include "../include/env.h"
+#include <random>
 
 using namespace std;
 using namespace tree;
@@ -44,8 +45,18 @@ EnvClass::EnvClass( std::string self_id )
 
     cout<<wayPointMap[0].i<<" "<<wayPointMap[0].j<<endl;
 
-    initialWayPoint = wayPointMap[0];
-    currentWayPoint = wayPointMap[0];
+    
+    random_device dev;
+    mt19937 rng(dev());
+    uniform_int_distribution<mt19937::result_type>dist5(0,4);
+    index = dist5(rng);
+
+    cout<<index<<endl;
+    initialWayPoint = wayPointMap[index];
+    currentWayPoint = wayPointMap[index];
+
+
+    cout<<currentWayPoint.i<<" "<<currentWayPoint.j<<endl;
 
     rotate_status = IDLE;
     rotate_counter = 0;
@@ -79,9 +90,9 @@ void EnvClass::settingEnvironment()
     //these are the abandoned area / obstacles
     env[8][3] = 'X';
     env[5][4] = 'X';
-    env[3][5] = 'X';
+    //env[3][5] = 'X';
     env[5][7] = 'X';
-    env[2][6] = 'X';
+    //env[2][6] = 'X';
     env[0][9] = 'X';
 
     //these are the waitpoints
@@ -163,13 +174,21 @@ ReturnStatus EnvClass::end_episode()
     cout<<"The last action: "<<actionNameMap[prev_child]<<endl;
     cout<<" ************************\n";
 
-
+cout<<"UPDATE == "<<currentWayPoint.i<<" "<<currentWayPoint.j<<endl;
     /* Q-Learning Code Goes here */
     q_table[ q_wayPointMap[currentWayPoint] ][prev_child] += ALPHA * ( 10 - q_table[ q_wayPointMap[currentWayPoint] ][prev_child]);
 
-   
 
-    currentWayPoint = initialWayPoint;
+    random_device dev;
+    mt19937 rng(dev());
+    uniform_int_distribution<mt19937::result_type>dist5(0,4);
+    index = dist5(rng);
+
+    cout<<index<<endl;
+
+    currentWayPoint = wayPointMap[index];
+
+    cout<<"CURRENT == "<<currentWayPoint.i<<" "<<currentWayPoint.j<<endl;
 
     height = (height == 1 ? 0 : 1);
 
