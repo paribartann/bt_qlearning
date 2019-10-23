@@ -39,7 +39,6 @@ namespace tree{
 
     class EnvClass
     {
-
         private:
             char env[10][10];
             int q_table[5][5];
@@ -47,7 +46,7 @@ namespace tree{
             direction orientation;
             
             std::map<int, Index> wayPointMap;
-            //std::map<Index, int> q_wayPointMap;
+            std::map<Index, int> q_wayPointMap;
             Index initialWayPoint;
             Index currentWayPoint;
 

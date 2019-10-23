@@ -25,7 +25,7 @@ int main()
 
     tree::Node* root = bt.buildBT("../files/BT_Fig8");
     
-    bt.execute(root, 100);
+    bt.execute(root, 1000);
 
     return 0;
 }

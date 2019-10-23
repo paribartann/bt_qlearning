@@ -109,7 +109,7 @@ namespace tree
     void BT::execute(Node* rootNode, int index)
     {
         cout<<"\n\n";
-        // while (!(envObject->getTargetVisible()))
+        //while (!(envObject->getTargetVisible()))
         while(index > 0)
         {
             cout<<"(START FROM THE ROOT)\n";

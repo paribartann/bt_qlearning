@@ -90,11 +90,11 @@ void EnvClass::settingEnvironment()
     wayPointMap[4] = Index(8,7);
 
 
-    // q_wayPointMap[Index(6,2]) = 0;
-    // q_wayPointMap[Index(3,2)] = 1;
-    // q_wayPointMap[Index(0,6)] = 2;
-    // q_wayPointMap[Index(3,8)] = 3;
-    // q_wayPointMap[Index(8,7)] = 4;
+    q_wayPointMap[Index(6,2)] = 0;
+    q_wayPointMap[Index(3,2)] = 1;
+    q_wayPointMap[Index(0,6)] = 2;
+    q_wayPointMap[Index(3,8)] = 3;
+    q_wayPointMap[Index(8,7)] = 4;
 
 
     actionNameMap[0] = "RotateA";
@@ -115,11 +115,22 @@ void EnvClass::settingEnvironment()
 void EnvClass::printEnvironment()
 {   
     cout<<"\n";
+    cout<<"HEREEEEEE == "<<q_wayPointMap[currentWayPoint]<<endl;
+    cout<<"Q_TABLE == "<<q_table[q_wayPointMap[currentWayPoint]][prev_child]<<endl;
     for (int i = 0; i < 10; i++)
     {
         for (int j = 0; j < 10; j++)
         {
             cout<<env[i][j]<<" ";
+        }
+        cout<<endl;
+    }
+    cout<<endl<<endl;
+    for (int i = 0; i < 5; i++)
+    {
+        for (int j = 0; j < 5; j++)
+        {
+            cout<<q_table[i][j]<<" ";
         }
         cout<<endl;
     }
@@ -160,13 +171,17 @@ ReturnStatus EnvClass::end_episode()
     q_table[currentWayPoint.key][prev_child] += ALPHA(10 - q_table[currentWayPoint.key][prev_child] );
     */
 
-   //q_table[q_wayPointMap[currentWayPoint]][prev_child] += ALPHA * ( 10 - q_table[q_wayPointMap[currentWayPoint]][prev_child] );
+
+    q_table[ q_wayPointMap[currentWayPoint] ][prev_child] += ALPHA * ( 10 - q_table[ q_wayPointMap[currentWayPoint] ][prev_child]);
 
     currentWayPoint = initialWayPoint;
 
     height = (height == 1 ? 0 : 1);
 
     targetVisible = true;
+
+printEnvironment();
+
 
     return SUCCESS;
 }

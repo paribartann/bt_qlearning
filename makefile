@@ -9,7 +9,7 @@ SOURCE = $(wildcard $(SRC)/*.cpp)
 OBJECT = $(patsubst %,$(BIN)/%, $(notdir $(SOURCE:.cpp=.o)))
 
 CC = g++
-CFLAGS = -Wall -g -std=c++14 -Wextra -I$(INC)
+CFLAGS = -Wall -g -std=c++0x -Wextra -I$(INC)
 
 RED = \033[1;31m
 GREEN = \033[1;32m
