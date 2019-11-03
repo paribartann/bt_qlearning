@@ -38,8 +38,8 @@ tree::ReturnStatus tree::SelectorStarNode::Tick()
 
     while (current_child_index_ < get_num_children())
     {
-        envObject->prev_child = current_child;
-        envObject->curr_child = current_child_index_;
+        envObject->previous_action = current_child;
+        envObject->current_action = current_child_index_;
 
         child_i_status_ = child[current_child_index_]->Tick();
         
