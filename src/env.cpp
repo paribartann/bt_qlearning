@@ -15,8 +15,7 @@
 #define ROTATE_COUNT 4
 #define ALPHA 0.1
 #define GAMMA 0.9
-#define NUM_WAYPOINTS 5
-#define NUM_ACTIONS 5
+
 
 #include <iostream>
 #include <random>
@@ -25,19 +24,19 @@
 using namespace std;
 using namespace tree;
 
-std::ostream &operator<<(std::ostream &os, const Index &pt)
-{
+std::ostream &operator<<(std::ostream &os, const Index &pt) {
     return os << "[" << pt.i << ", " << pt.j << "]";
 }
 
-EnvClass::EnvClass(std::string self_id)   //CONSTRUCTOR
-{
+EnvClass::EnvClass(std::string self_id) {  //CONSTRUCTOR 
 
     settingEnvironment();
 
     self_id_ = self_id;
 
     targetVisible = false;
+
+    reset = false;
 
 
     random_device dev;
@@ -56,8 +55,8 @@ EnvClass::EnvClass(std::string self_id)   //CONSTRUCTOR
     count = 0;
 
 
-    initialWayPoint = wayPointMap[4];
-    currentWayPoint = wayPointMap[4];
+    initialWayPoint = wayPointMap[0];
+    currentWayPoint = wayPointMap[0];
 
 
     rotate_status = IDLE;
@@ -67,8 +66,7 @@ EnvClass::EnvClass(std::string self_id)   //CONSTRUCTOR
     previous_action = 0;
 }
 
-void EnvClass::settingEnvironment()
-{
+void EnvClass::settingEnvironment() {
     for (int i = 0; i < 10; i++)
     {
         for (int j = 0; j < 10; j++)
@@ -123,8 +121,7 @@ void EnvClass::settingEnvironment()
     //printEnvironment();
 }
 
-ReturnStatus EnvClass::is_target_visible()
-{
+ReturnStatus EnvClass::is_target_visible() {
     cout << "here in is_target_visible()" << endl;
     bool flag = isTargetThere();
     if (flag)
@@ -136,8 +133,7 @@ ReturnStatus EnvClass::is_target_visible()
     }
 }
 
-ReturnStatus EnvClass::end_episode()
-{
+ReturnStatus EnvClass::end_episode() {
     cout << "here in end_episode()" << endl;
     cout << "**************** The Target has been found *****************\n";
     cout << " *************************\n";
@@ -174,13 +170,16 @@ ReturnStatus EnvClass::end_episode()
 
     targetVisible = true;
 
+    reset = true;
+
+    rotate_status = SUCCESS;
+
     printQTable();
 
     return SUCCESS;
 }
 
-ReturnStatus EnvClass::rotate()
-{
+ReturnStatus EnvClass::rotate() {
     cout << "here in rotate.\n";
     cout << "Previous Orientation is = " << getDirection(orientation) << endl;
 
@@ -213,8 +212,7 @@ ReturnStatus EnvClass::rotate()
     return rotate_status;
 }
 
-ReturnStatus EnvClass::elevate()
-{
+ReturnStatus EnvClass::elevate() {
     cout << "here in elevate!!\n";
     cout << "Previous Drone's Height is:" << (height == 1 ? "high" : "low") << endl;
     if (height == 0)
@@ -229,8 +227,7 @@ ReturnStatus EnvClass::elevate()
     return SUCCESS;
 }
 
-tree::ReturnStatus EnvClass::de_elevate()
-{
+tree::ReturnStatus EnvClass::de_elevate() {
     cout << "here in de-elevate!!\n";
     cout << "Previous Drone's Height is:" << (height == 1 ? "high" : "low") << endl;
     if (height == 1)
@@ -245,8 +242,7 @@ tree::ReturnStatus EnvClass::de_elevate()
     return SUCCESS;
 }
 
-ReturnStatus EnvClass::waypoint_translation()
-{
+ReturnStatus EnvClass::waypoint_translation() {
 
     cout << "here in waypoint translation\n"
          << endl;
@@ -283,13 +279,12 @@ ReturnStatus EnvClass::waypoint_translation()
     q_table[q_wayPointMap[prevWaypoint]][index] += 
                         ALPHA * (0 + GAMMA * findMaxQValue(q_wayPointMap[currentWayPoint]) - q_table[q_wayPointMap[prevWaypoint]][index]) ;
 
-    printEnvironment();
+    //printEnvironment();
     return SUCCESS;
 }
 
 //JUST A HELPER FUNCTION
-bool EnvClass::isTargetThere()
-{
+bool EnvClass::isTargetThere() {
     bool flagA = false;
     vector<Index> returnBlocks;
     cout << "*************************************************************************************************************\n";
@@ -313,8 +308,7 @@ bool EnvClass::isTargetThere()
     return flagA;
 }
 
-string EnvClass::getDirection(direction ori)
-{
+string EnvClass::getDirection(direction ori) {
     string dir = "";
     if (ori == 0)
     {
@@ -341,8 +335,7 @@ string EnvClass::getDirection(direction ori)
 }
 
 
-int EnvClass::getIntDirection(direction ori)
-{
+int EnvClass::getIntDirection(direction ori) {
     int dir = 0;
     if (ori == 0)
     {
@@ -369,8 +362,7 @@ int EnvClass::getIntDirection(direction ori)
 }
 
 //utility functions
-ReturnStatus EnvClass::call_function(string function_name)
-{
+ReturnStatus EnvClass::call_function(string function_name) {
     typedef tree::ReturnStatus (EnvClass::*F_ptr)();
     std::map<std::string, F_ptr> myMap;
 
@@ -385,8 +377,7 @@ ReturnStatus EnvClass::call_function(string function_name)
     return (this->*fun)();
 }
 
-ReturnStatus EnvClass::call_condition(string function_name)
-{
+ReturnStatus EnvClass::call_condition(string function_name) {
     typedef tree::ReturnStatus (EnvClass::*F_ptr)();
     std::map<std::string, F_ptr> myMap;
 
@@ -397,8 +388,7 @@ ReturnStatus EnvClass::call_condition(string function_name)
     return (this->*fun)();
 }
 
-vector<Index> EnvClass::visibleBlockFunction(Index index, direction orientation, int height)
-{
+vector<Index> EnvClass::visibleBlockFunction(Index index, direction orientation, int height) {
 
     int i = index.i;
     int j = index.j;
@@ -1543,10 +1533,10 @@ vector<Index> EnvClass::visibleBlockFunction(Index index, direction orientation,
 }
 
 
-double EnvClass::findMaxQValue(int waypoint){
+double EnvClass::findMaxQValue(int waypoint) {
     double max_val = q_table[waypoint][0];
     //cout<<"NUM_ACTIONS == "<<NUM_ACTIONS<<endl;
-    for (int i = 1; i < NUM_ACTIONS; i++)
+    for (int i = 1; i < NUMBER_OF_ACTIONS; i++)
     {
         if (max_val < q_table[waypoint][i])
         {
@@ -1557,8 +1547,7 @@ double EnvClass::findMaxQValue(int waypoint){
 }
 
 
-void EnvClass::printEnvironment()
-{
+void EnvClass::printEnvironment() {
     cout << "\n";
 
     for (int i = 0; i < 10; i++)
@@ -1574,8 +1563,7 @@ void EnvClass::printEnvironment()
 
 }
 
-void EnvClass::printQTable()
-{
+void EnvClass::printQTable() {
     cout << "\n";
 
 

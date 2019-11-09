@@ -40,7 +40,7 @@ class EnvClass
 {
 private:
     char env[10][10];
-    double q_table[5][5];
+    
     enum direction
     {
         EAST,
@@ -49,13 +49,7 @@ private:
         NORTH
     };
     
-    direction orientation;
-
-    std::map<int, Index> wayPointMap;
-    std::map<Index, int> q_wayPointMap;
-
-    Index initialWayPoint;
-    Index currentWayPoint;
+  
 
     std::map<int, std::string> actionNameMap;
 
@@ -69,20 +63,35 @@ private:
 public:
     EnvClass(std::string self_id); //constructor
 
+    direction orientation;
+
+    std::map<int, Index> wayPointMap;
+    std::map<Index, int> q_wayPointMap;
+
+    double q_table[5][5];
+
     std::vector<Index> visibleBlockFunction(Index, direction, int); //a lookup table that returns
                                                                     //all the visible blocks from a
                                                                     //certain orientation, height, and
                                                                     //a location
 
+    Index initialWayPoint;
+    Index currentWayPoint;
+
     bool getTargetVisible() { return targetVisible; }
     std::string getDirection(direction);
     int getIntDirection(direction);
+
+    const int NUMBER_OF_WAYPOINTS = 5;
+    const int NUMBER_OF_ACTIONS = 5;
 
     int rotate_counter;
     ReturnStatus rotate_status;
 
     unsigned int current_action;
     unsigned int previous_action;
+
+    bool reset;
 
     int index; //for random index
     /****************action*********************/

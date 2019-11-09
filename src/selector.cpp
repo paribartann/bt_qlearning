@@ -17,50 +17,48 @@
 #include <iostream>
 #include <string>
 
-
 tree::SelectorNode::SelectorNode(std::string key, unsigned int num)
 {
-    //SelectorNode* temp = new SelectorNode; 
-    this->key = key; 
+    this->key = key;
     set_type(SELECTOR);
     set_num_children(num);
 }
 
-
 tree::ReturnStatus tree::SelectorNode::Tick()
 {
-    std::cout<<"Selector Node ticked"<<std::endl;
+    std::cout << "Selector Node ticked" << std::endl;
+
     for (unsigned int i = 0; i < get_num_children(); i++)
     {
         child_i_status_ = child[i]->Tick();
-        
-        if (child_i_status_ == tree::FAILURE)
+
+        if (child_i_status_ != tree::FAILURE)
         {
-            set_status(child_i_status_);
-            if (i == (get_num_children() - 1))
+            if (child_i_status_ == tree::SUCCESS)
             {
-                std::cout<<"Last child of SELECTOR node returned FAILURE. Going for other one"<<std::endl;
-                return tree::FAILURE;
+                child[i]->set_status(tree::IDLE);
+                std::cout << i + 1 << "'th child of SELECTOR node returned SUCCESS. Returning back to the parent" << std::endl;
+                return child_i_status_; //success 
             }
-            else
+            else //this is the case of running
             {
-                std::cout<<i+1<<"'th child of SELECTOR node returned FAILURE. Going for other one"<<std::endl;
+                std::cout << i + 1 << "'th child of SELECTOR node returned RUNNNING. Returning back to the parent" << std::endl;
             }
         }
         else
         {
-            if (child_i_status_ == tree::SUCCESS)
+            if (i == (get_num_children() - 1))
             {
-                std::cout<<i+1<<"'th child of SELECTOR node returned SUCCESS. Returning back to the parent" <<std::endl;
+                child[i]->set_status(tree::IDLE);
+                std::cout << "Last child of SELECTOR node returned FAILURE. The sequence failed and it's returning failure" << std::endl;
+                return tree::FAILURE;   // If the  child status is failure, and it is the last child to be ticked,
+                                        // then the sequence has failed.
             }
             else
             {
-                std::cout<<i+1<<"'th child of SELECTOR node returned RUNNNING. Returning back to the parent" <<std::endl;
+                std::cout << i + 1 << "'th child of SELECTOR node returned FAILURE. Going for other child" << std::endl;
             }
-            
-            return child_i_status_;
         }
-        
     }
     return child_i_status_;
 }

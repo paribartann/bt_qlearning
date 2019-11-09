@@ -37,34 +37,34 @@ tree::ReturnStatus tree::SequenceNode::Tick()
     {       
         child_i_status_ = child[i]->Tick();
 
-        if (child_i_status_ == tree::SUCCESS)
+
+         if (child_i_status_ != tree::SUCCESS)
         {
-            set_status(child_i_status_);
-            if (i == (get_num_children() - 1))
+            if (child_i_status_ == tree::FAILURE)
             {
-                std::cout<<"Last child of SEQUENCE node returned SUCCESS. Going for other one"<<std::endl;
-                return tree::SUCCESS;
+                child[i]->set_status(tree::IDLE);
+                std::cout << i + 1 << "'th child of SEQUENCE node returned FAILURE. Returning back to the parent" << std::endl;
+                return child_i_status_; //FAILURE
             }
-            else
+            else //this is the case of running
             {
-                std::cout<<i+1<<"'th child of SEQUENCE node returned SUCCESS. Going for other one"<<std::endl;
+                std::cout << i + 1 << "'th child of SEQUENCE node returned RUNNNING. Returning back to the parent" << std::endl;
             }
         }
         else
         {
-            if (child_i_status_ == tree::FAILURE)
+            child[i]->set_status(tree::IDLE);   //JUST TO SAY THAT IT HAS FINISHED
+            if (i == (get_num_children() - 1))
             {
-                std::cout<<i+1<<"'th child of SEQUENCE node returned FAILURE. Returning back to the parent" <<std::endl;
+                std::cout << "Last child of SEQUENCE node returned SUCCESS. The sequence  failed and it's returning failure" << std::endl;
+                return tree::SUCCESS;   // If the  child status is failure, and it is the last child to be ticked,
+                                        // then the sequence has failed.
             }
             else
             {
-                std::cout<<i+1<<"'th child of SELECTOR node returned RUNNNING. Returning back to the parent" <<std::endl;
+                std::cout << i + 1 << "'th child of SEQUENCE node returned SUCCESS. Going for other child" << std::endl;
             }
-            return child_i_status_;
         }
-        
-        
-           
     }
-    return child_i_status_; 
+    return child_i_status_;
 }

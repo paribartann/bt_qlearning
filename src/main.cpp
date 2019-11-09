@@ -24,8 +24,9 @@ int main()
     tree::BT bt("/uav1");
 
     tree::Node* root = bt.buildBT("../files/BT_Fig8");
+    cout<<root->get_type()<<endl;
     
-    bt.execute(root, 10000);
+    bt.execute(root, 100000 );
 
     return 0;
 }
