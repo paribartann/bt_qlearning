@@ -78,9 +78,12 @@ tree::ReturnStatus tree::LearningSequenceStarNode::Tick()
         envObject->previous_action = current_child;
         envObject->current_action = returnedArray[current_child_index_];
         current_child = returnedArray[current_child_index_];
+        cout<<"PREV ACTION = "<< envObject->previous_action <<endl;
+        cout<<"CURR ACTION = "<< envObject->current_action <<endl;
+        cout<<"CURR CHILD = "<< current_child <<endl;
 
         cout << "\n"
-             << returnedArray[current_child_index_] << " number child is being ticked" << endl;
+             << returnedArray[current_child_index_] + 1<< " number child is being ticked" << endl;
 
         //tick the children and get its status
         child_i_status_ = child[returnedArray[current_child_index_]]->Tick();
@@ -102,7 +105,7 @@ tree::ReturnStatus tree::LearningSequenceStarNode::Tick()
             else //if it;s the last child AND SUCCESS
             {
                 current_child_index_ = 0;
-                
+
                 /****************** GENERATING RANDOM NUMBER ***************************/
                 random_device rd;
                 srand(rd());
@@ -114,8 +117,11 @@ tree::ReturnStatus tree::LearningSequenceStarNode::Tick()
                 int n = sizeof(ActionIndexes) / sizeof(ActionIndexes[0]);
                 /***********************************************************************/
 
-                current_state = envObject->currentWayPoint; //observing the current state
-
+                //because always the reset is happening after waypoint translation, getting the indexes of next 
+                //waypoint and sorting it's (action array);
+                current_state = envObject->currentWayPoint; //observing the current state 
+                
+                
                 //cout<<"X: "<<current_state.i<<" Y: "<s<current_state.j<<endl;
 
                 int *returnedActionArray = getActionsArray(ActionIndexes, random_number, n); //get the action based on the random number generated
@@ -152,7 +158,7 @@ int *tree::LearningSequenceStarNode::SortingArray(double array[][5], int actionA
 
     int max_index;
     double index_val;
-
+    cout<<"SORTING ARRAY OF : "<<current_state.i<<" "<<current_state.j<<endl;
     for (unsigned int i = 0; i < get_num_children() - 1; i++)
     {
         max_index = i;

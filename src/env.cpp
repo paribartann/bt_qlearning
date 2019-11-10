@@ -16,7 +16,6 @@
 #define ALPHA 0.1
 #define GAMMA 0.9
 
-
 #include <iostream>
 #include <random>
 #include "../include/env.h"
@@ -24,11 +23,13 @@
 using namespace std;
 using namespace tree;
 
-std::ostream &operator<<(std::ostream &os, const Index &pt) {
+std::ostream &operator<<(std::ostream &os, const Index &pt)
+{
     return os << "[" << pt.i << ", " << pt.j << "]";
 }
 
-EnvClass::EnvClass(std::string self_id) {  //CONSTRUCTOR 
+EnvClass::EnvClass(std::string self_id)
+{ //CONSTRUCTOR
 
     settingEnvironment();
 
@@ -38,10 +39,8 @@ EnvClass::EnvClass(std::string self_id) {  //CONSTRUCTOR
 
     reset = false;
 
-
     random_device dev;
     mt19937 rng(dev());
-
 
     uniform_int_distribution<mt19937::result_type> dist3(0, 3);
     orientation = direction(dist3(rng));
@@ -54,10 +53,8 @@ EnvClass::EnvClass(std::string self_id) {  //CONSTRUCTOR
 
     count = 0;
 
-
     initialWayPoint = wayPointMap[0];
     currentWayPoint = wayPointMap[0];
-
 
     rotate_status = IDLE;
     rotate_counter = 0;
@@ -66,7 +63,8 @@ EnvClass::EnvClass(std::string self_id) {  //CONSTRUCTOR
     previous_action = 0;
 }
 
-void EnvClass::settingEnvironment() {
+void EnvClass::settingEnvironment()
+{
     for (int i = 0; i < 10; i++)
     {
         for (int j = 0; j < 10; j++)
@@ -121,7 +119,8 @@ void EnvClass::settingEnvironment() {
     //printEnvironment();
 }
 
-ReturnStatus EnvClass::is_target_visible() {
+ReturnStatus EnvClass::is_target_visible()
+{
     cout << "here in is_target_visible()" << endl;
     bool flag = isTargetThere();
     if (flag)
@@ -133,7 +132,8 @@ ReturnStatus EnvClass::is_target_visible() {
     }
 }
 
-ReturnStatus EnvClass::end_episode() {
+ReturnStatus EnvClass::end_episode()
+{
     cout << "here in end_episode()" << endl;
     cout << "**************** The Target has been found *****************\n";
     cout << " *************************\n";
@@ -142,14 +142,25 @@ ReturnStatus EnvClass::end_episode() {
          << "(" << currentWayPoint.i << ", " << currentWayPoint.j << ") *\n";
     cout << "* Drone is Facing: " << getDirection(orientation) << "  *" << endl;
     cout << "* Drone's Height is:" << (height == 1 ? "high" : "low") << "  *" << endl;
-    cout << "The index of the last action: " << previous_action << endl;
-    cout << "The last action: " << actionNameMap[previous_action] << endl;
+    cout << "The index of the last action: " << current_action << endl;
+    cout << "The last action: " << actionNameMap[current_action] << endl;
     cout << " ************************\n";
-
 
     cout << "END EP where the target was found WAYPOINT == " << currentWayPoint.i << " " << currentWayPoint.j << endl;
     /* Q-Learning Code Goes here */
-    q_table[q_wayPointMap[currentWayPoint]][previous_action] += ALPHA * (10 - q_table[q_wayPointMap[currentWayPoint]][previous_action]);
+
+    Index wayP;
+    if (current_action == 4)
+    {
+        wayP = prevWaypoint;
+    }
+    else
+    {
+        wayP = currentWayPoint;
+    }
+
+    cout << "Updating the q-table of  WAYPOINT == " << wayP.i << " " << wayP.j << endl;
+    q_table[q_wayPointMap[wayP]][current_action] += ALPHA * (10 - q_table[q_wayPointMap[currentWayPoint]][previous_action]);
 
     //setting the waypoint to its initial value here
     currentWayPoint = initialWayPoint;
@@ -172,14 +183,13 @@ ReturnStatus EnvClass::end_episode() {
 
     reset = true;
 
-    rotate_status = SUCCESS;
-
     printQTable();
 
     return SUCCESS;
 }
 
-ReturnStatus EnvClass::rotate() {
+ReturnStatus EnvClass::rotate()
+{
     cout << "here in rotate.\n";
     cout << "Previous Orientation is = " << getDirection(orientation) << endl;
 
@@ -190,7 +200,7 @@ ReturnStatus EnvClass::rotate() {
 
     if (rotate_counter > 0)
     {
-        orientation = getIntDirection(orientation) < 3 ? direction(((getIntDirection(orientation)) % 3) + 1) 
+        orientation = getIntDirection(orientation) < 3 ? direction(((getIntDirection(orientation)) % 3) + 1)
                                                        : direction(((getIntDirection(orientation)) % 3));
     }
     rotate_counter--;
@@ -203,31 +213,31 @@ ReturnStatus EnvClass::rotate() {
 
     /* Q-Learning Code Goes here */
 
-    
-    q_table[q_wayPointMap[currentWayPoint]][current_action] += 
-                        ALPHA * (0 + GAMMA * findMaxQValue(q_wayPointMap[currentWayPoint]) - q_table[q_wayPointMap[currentWayPoint]][current_action]) ;
-    
+    cout << "Updating the q-table of  WAYPOINT in rotate == " << currentWayPoint.i << " " << currentWayPoint.j << " and action is " << current_action << endl;
+    q_table[q_wayPointMap[currentWayPoint]][current_action] +=
+        ALPHA * (0 + GAMMA * findMaxQValue(q_wayPointMap[currentWayPoint]) - q_table[q_wayPointMap[currentWayPoint]][current_action]);
 
     printQTable();
     return rotate_status;
 }
 
-ReturnStatus EnvClass::elevate() {
+ReturnStatus EnvClass::elevate()
+{
     cout << "here in elevate!!\n";
     cout << "Previous Drone's Height is:" << (height == 1 ? "high" : "low") << endl;
     if (height == 0)
         height = 1;
     cout << "Current Drone's Height is:" << (height == 1 ? "high" : "low") << endl;
-
-    q_table[q_wayPointMap[currentWayPoint]][current_action] += 
-                        ALPHA * (0 + GAMMA * findMaxQValue(q_wayPointMap[currentWayPoint]) - q_table[q_wayPointMap[currentWayPoint]][current_action]) ;
-
+    cout << "Updating the q-table of  WAYPOINT in elevate == " << currentWayPoint.i << " " << currentWayPoint.j << " and action is " << current_action << endl;
+    q_table[q_wayPointMap[currentWayPoint]][current_action] +=
+        ALPHA * (0 + GAMMA * findMaxQValue(q_wayPointMap[currentWayPoint]) - q_table[q_wayPointMap[currentWayPoint]][current_action]);
 
     printQTable();
     return SUCCESS;
 }
 
-tree::ReturnStatus EnvClass::de_elevate() {
+tree::ReturnStatus EnvClass::de_elevate()
+{
     cout << "here in de-elevate!!\n";
     cout << "Previous Drone's Height is:" << (height == 1 ? "high" : "low") << endl;
     if (height == 1)
@@ -235,14 +245,17 @@ tree::ReturnStatus EnvClass::de_elevate() {
 
     cout << "Current Drone's Height is:" << (height == 1 ? "high" : "low") << endl;
 
-    q_table[q_wayPointMap[currentWayPoint]][current_action] += 
-                        ALPHA * ( 0 + GAMMA * findMaxQValue(q_wayPointMap[currentWayPoint]) - q_table[q_wayPointMap[currentWayPoint]][current_action] ) ;
+    cout << "Updating the q-table of  WAYPOINT in de-elevate == " << currentWayPoint.i << " " << currentWayPoint.j << " and action is " << current_action << endl;
+
+    q_table[q_wayPointMap[currentWayPoint]][current_action] +=
+        ALPHA * (0 + GAMMA * findMaxQValue(q_wayPointMap[currentWayPoint]) - q_table[q_wayPointMap[currentWayPoint]][current_action]);
 
     printQTable();
     return SUCCESS;
 }
 
-ReturnStatus EnvClass::waypoint_translation() {
+ReturnStatus EnvClass::waypoint_translation()
+{
 
     cout << "here in waypoint translation\n"
          << endl;
@@ -250,7 +263,7 @@ ReturnStatus EnvClass::waypoint_translation() {
          << "(" << currentWayPoint.i << ", " << currentWayPoint.j << ")\n";
 
     int index = 4;
-    Index prevWaypoint = currentWayPoint;   //saving the current waypoint
+    prevWaypoint = currentWayPoint; //saving the current waypoint
     if ((currentWayPoint.i == wayPointMap[0].i) && (currentWayPoint.j == wayPointMap[0].j))
     {
         currentWayPoint = wayPointMap[1];
@@ -274,17 +287,21 @@ ReturnStatus EnvClass::waypoint_translation() {
 
     cout << "Current Location: "
          << "(" << currentWayPoint.i << ", " << currentWayPoint.j << ")\n";
+    cout << "Updating the q-table of  WAYPOINT in  == " << prevWaypoint.i << " " << prevWaypoint.j << " and action is " << current_action << endl;
+    cout << "current q-value  = " << q_table[q_wayPointMap[prevWaypoint]][index] << endl;
+    cout << "Max q-value of next state is = " << findMaxQValue(q_wayPointMap[currentWayPoint]) << endl;
+    cout << "Adding = " << ALPHA * (0 + GAMMA * findMaxQValue(q_wayPointMap[currentWayPoint]) - q_table[q_wayPointMap[prevWaypoint]][index]) << endl;
 
+    q_table[q_wayPointMap[prevWaypoint]][index] +=
+        ALPHA * (0 + GAMMA * findMaxQValue(q_wayPointMap[currentWayPoint]) - q_table[q_wayPointMap[prevWaypoint]][index]);
 
-    q_table[q_wayPointMap[prevWaypoint]][index] += 
-                        ALPHA * (0 + GAMMA * findMaxQValue(q_wayPointMap[currentWayPoint]) - q_table[q_wayPointMap[prevWaypoint]][index]) ;
-
-    //printEnvironment();
+    printQTable();
     return SUCCESS;
 }
 
 //JUST A HELPER FUNCTION
-bool EnvClass::isTargetThere() {
+bool EnvClass::isTargetThere()
+{
     bool flagA = false;
     vector<Index> returnBlocks;
     cout << "*************************************************************************************************************\n";
@@ -308,7 +325,8 @@ bool EnvClass::isTargetThere() {
     return flagA;
 }
 
-string EnvClass::getDirection(direction ori) {
+string EnvClass::getDirection(direction ori)
+{
     string dir = "";
     if (ori == 0)
     {
@@ -334,8 +352,8 @@ string EnvClass::getDirection(direction ori) {
     return dir;
 }
 
-
-int EnvClass::getIntDirection(direction ori) {
+int EnvClass::getIntDirection(direction ori)
+{
     int dir = 0;
     if (ori == 0)
     {
@@ -362,7 +380,8 @@ int EnvClass::getIntDirection(direction ori) {
 }
 
 //utility functions
-ReturnStatus EnvClass::call_function(string function_name) {
+ReturnStatus EnvClass::call_function(string function_name)
+{
     typedef tree::ReturnStatus (EnvClass::*F_ptr)();
     std::map<std::string, F_ptr> myMap;
 
@@ -377,7 +396,8 @@ ReturnStatus EnvClass::call_function(string function_name) {
     return (this->*fun)();
 }
 
-ReturnStatus EnvClass::call_condition(string function_name) {
+ReturnStatus EnvClass::call_condition(string function_name)
+{
     typedef tree::ReturnStatus (EnvClass::*F_ptr)();
     std::map<std::string, F_ptr> myMap;
 
@@ -388,7 +408,8 @@ ReturnStatus EnvClass::call_condition(string function_name) {
     return (this->*fun)();
 }
 
-vector<Index> EnvClass::visibleBlockFunction(Index index, direction orientation, int height) {
+vector<Index> EnvClass::visibleBlockFunction(Index index, direction orientation, int height)
+{
 
     int i = index.i;
     int j = index.j;
@@ -1532,8 +1553,8 @@ vector<Index> EnvClass::visibleBlockFunction(Index index, direction orientation,
     return visibleBlocks;
 }
 
-
-double EnvClass::findMaxQValue(int waypoint) {
+double EnvClass::findMaxQValue(int waypoint)
+{
     double max_val = q_table[waypoint][0];
     //cout<<"NUM_ACTIONS == "<<NUM_ACTIONS<<endl;
     for (int i = 1; i < NUMBER_OF_ACTIONS; i++)
@@ -1546,8 +1567,8 @@ double EnvClass::findMaxQValue(int waypoint) {
     return max_val;
 }
 
-
-void EnvClass::printEnvironment() {
+void EnvClass::printEnvironment()
+{
     cout << "\n";
 
     for (int i = 0; i < 10; i++)
@@ -1560,14 +1581,13 @@ void EnvClass::printEnvironment() {
     }
     cout << endl
          << endl;
-
 }
 
-void EnvClass::printQTable() {
+void EnvClass::printQTable()
+{
     cout << "\n";
 
-
-    cout<<"Q_TABLE :::"<<endl;
+    cout << "Q_TABLE :::" << endl;
     for (int i = 0; i < 5; i++)
     {
         for (int j = 0; j < 5; j++)

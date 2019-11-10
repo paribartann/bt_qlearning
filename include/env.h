@@ -102,6 +102,8 @@ public:
     ReturnStatus end_episode();
     /****************endOfAction*********************/
 
+    Index prevWaypoint;
+
     //condition
     ReturnStatus is_target_visible();
 

@@ -80,6 +80,10 @@ tree::ReturnStatus tree::LearningSelectorStarNode::Tick()
         envObject->previous_action = current_child;
         envObject->current_action = returnedArray[current_child_index_];
         current_child = returnedArray[current_child_index_];
+        
+        cout<<"PREV ACTION = "<< envObject->previous_action <<endl;
+        cout<<"CURR ACTION = "<< envObject->current_action <<endl;
+        cout<<"CURR CHILD = "<< current_child <<endl;
 
         cout << returnedArray[current_child_index_] << " number child is being ticked" << endl;
 
