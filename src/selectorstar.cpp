@@ -55,7 +55,7 @@ tree::ReturnStatus tree::SelectorStarNode::Tick()
             }
             else
             {
-                std::cout<<"Last child of SELECTORSTAR eturned FAILURE. Returning FAILURE to the Parent"<<std::endl;
+                std::cout<<"Last child of SELECTORSTAR returned FAILURE. Returning FAILURE to the Parent"<<std::endl;
                 current_child_index_ = 0;
                 return tree::FAILURE;
             }

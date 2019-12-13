@@ -38,7 +38,7 @@ tree::ReturnStatus tree::SequenceStarNode::Tick()
         child[current_child_index_]->set_status(child_i_status_);
 
         //now checking the returned status of the children nodes
-        //if the child returns sucess
+        //if the child returns success
         
         if (child_i_status_ == tree::SUCCESS)
         {

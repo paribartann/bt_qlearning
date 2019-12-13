@@ -1,4 +1,4 @@
-/* 
+/*
 #Copyright (C) <September, 2019>  <Paribartan Dhakal>
 
 #This program is free software: you can redistribute it and/or modify
@@ -15,111 +15,111 @@
 #ifndef ENV_H
 #define ENV_H
 
-#include <string>
-#include <vector>
 #include <map>
+#include <string>
+#include <utility>
+#include <vector>
 #include "node.h"
 
-namespace tree
-{
+namespace tree {
 
-struct Index
-{
-    Index() {}
-    Index(int i, int j) : i(i), j(j) {}
-    int i;
-    int j;
+struct Index {
+  Index() {}
+  Index(int i, int j) : i(i), j(j) {}
+  int i;
+  int j;
 
-    bool operator<(const Index &right) const
-    {
-        return i < right.i || (i == right.i && j < right.j);
-    }
+  bool operator<(const Index &right) const {
+    return i < right.i || (i == right.i && j < right.j);
+  }
 };
 
-class EnvClass
-{
-private:
-    char env[10][10];
-    
-    enum direction
-    {
-        EAST,
-        SOUTH,
-        WEST,
-        NORTH
-    };
-    
-  
+class EnvClass {
+ private:
+  char env[10][10];
 
-    std::map<int, std::string> actionNameMap;
+  std::map<int, std::string> actionNameMap;
 
-    int height;
-    int count; //this is needed to maintain the intersection of the visible blocks
 
-    bool targetVisible;
+  int count;  // this is needed to maintain the intersection of the visible
+              // blocks
 
-    std::string self_id_;
+  bool targetVisible;
 
-public:
-    EnvClass(std::string self_id); //constructor
+  std::string self_id_;
 
-    direction orientation;
+ public:
+  enum direction { EAST, SOUTH, WEST, NORTH };
+  int height;
+  EnvClass(std::string self_id);  // constructor
 
-    std::map<int, Index> wayPointMap;
-    std::map<Index, int> q_wayPointMap;
+  direction orientation;
 
-    double q_table[5][5];
+  std::map<int, Index> wayPointMap;
+  std::map<Index, int> q_wayPointMap;
 
-    std::vector<Index> visibleBlockFunction(Index, direction, int); //a lookup table that returns
-                                                                    //all the visible blocks from a
-                                                                    //certain orientation, height, and
-                                                                    //a location
+  std::pair<int, direction> heightDirection;
+  std::pair<Index, std::pair<int, direction>> wayPointHeightDirection;
+  std::map<std::pair<Index, std::pair<int, direction>>, int>
+      q_wayPointHeightDirectionMap;
 
-    Index initialWayPoint;
-    Index currentWayPoint;
+  // 5 waypoints * 4 directions * 2 heights = 40 states
+  // 5 actions
+  double q_table[40][5];
 
-    bool getTargetVisible() { return targetVisible; }
-    std::string getDirection(direction);
-    int getIntDirection(direction);
+  std::vector<Index> visibleBlockFunction(Index, direction,
+                                          int);  // a lookup table that returns
+                                                 // all the visible blocks from
+                                                 // a certain orientation,
+                                                 // height, and a location
 
-    const int NUMBER_OF_WAYPOINTS = 5;
-    const int NUMBER_OF_ACTIONS = 5;
+  Index initialWayPoint;
+  Index currentWayPoint;
 
-    int rotate_counter;
-    ReturnStatus rotate_status;
+  bool getTargetVisible() { return targetVisible; }
+  std::string getDirection(direction);
+  int getIntDirection(direction);
 
-    unsigned int current_action;
-    unsigned int previous_action;
+  const int NUMBER_OF_WAYPOINTS = 5;
+  const int NUMBER_OF_ACTIONS = 5;
 
-    bool reset;
+  int rotate_counter;
+  ReturnStatus rotate_status;
 
-    int index; //for random index
-    /****************action*********************/
-    ReturnStatus rotate();
-    ReturnStatus elevate();
-    ReturnStatus de_elevate();
-    ReturnStatus waypoint_translation();
-    ReturnStatus end_episode();
-    /****************endOfAction*********************/
+  unsigned int current_action;
+  unsigned int previous_action;
 
-    Index prevWaypoint;
+  bool reset;
 
-    //condition
-    ReturnStatus is_target_visible();
+  int index;  // for random index
+  /****************action*********************/
+  ReturnStatus rotate();
+  ReturnStatus elevate();
+  ReturnStatus de_elevate();
+  ReturnStatus waypoint_translation();
+  ReturnStatus end_episode();
+  /****************endOfAction*********************/
 
-    //utility function for mapping a function with its string value(gotten from a BT file)
-    ReturnStatus call_function(std::string);
-    ReturnStatus call_condition(std::string);
+  Index prevWaypoint;
 
-    bool isTargetThere(); //calls a visibleBlock function and checks if target
-                          //is present in the returned indexes.
+  // condition
+  ReturnStatus is_target_visible();
 
-    double findMaxQValue(int); //takes in waypoint (0-4) and action (0,4)
-    void settingEnvironment();
-    void printEnvironment();
-    void printQTable();
+  // utility function for mapping a function with its string value(gotten from a
+  // BT file)
+  ReturnStatus call_function(std::string);
+  ReturnStatus call_condition(std::string);
+
+  bool isTargetThere();  // calls a visibleBlock function and checks if target
+                         // is present in the returned indexes.
+
+  double findMaxQValue(int);  // takes in waypoint (0-4) and action (0,4)
+  void settingEnvironment();
+  void initialiseQTableMap();
+  void printEnvironment();
+  void printQTable();
 };
 
-} // namespace tree
+}  // namespace tree
 
 #endif

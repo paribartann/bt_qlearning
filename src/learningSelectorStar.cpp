@@ -56,8 +56,19 @@ tree::ReturnStatus tree::LearningSelectorStarNode::Tick()
         int ActionIndexes[] = {0, 1, 2, 3, 4};
         int n = sizeof(ActionIndexes) / sizeof(ActionIndexes[0]);
         /***********************************************************************/
+        
+        //this is for the wayP and current action/////////
+        std::pair<int, EnvClass::direction> heightDirection;
+        heightDirection.first = envObject->height;
+        heightDirection.second = envObject->orientation;
+       
+        current_state.first = envObject->currentWayPoint;
+        current_state.second = heightDirection;
 
-        current_state = envObject->currentWayPoint; //observing the current state
+        cout<<envObject->q_wayPointHeightDirectionMap[current_state];
+        ///////////////////////////////////////////////////
+        //current_state = envObject->currentWayPoint; //observing the current state
+
 
         //cout<<"X: "<<current_state.i<<" Y: "<s<current_state.j<<endl;
 
@@ -83,7 +94,7 @@ tree::ReturnStatus tree::LearningSelectorStarNode::Tick()
         
         cout<<"PREV ACTION = "<< envObject->previous_action <<endl;
         cout<<"CURR ACTION = "<< envObject->current_action <<endl;
-        cout<<"CURR CHILD = "<< current_child <<endl;
+       
 
         cout << returnedArray[current_child_index_] << " number child is being ticked" << endl;
 
@@ -92,7 +103,7 @@ tree::ReturnStatus tree::LearningSelectorStarNode::Tick()
 
         if (child_i_status_ == tree::FAILURE)
         {
-            child[current_child_index_]->set_status(tree::IDLE); //just to say that it's been completed
+            child[returnedArray[current_child_index_]]->set_status(tree::IDLE); //just to say that it's been completed
 
             if (current_child_index_ != (get_num_children() - 1)) //if not the last child
             {
@@ -110,13 +121,23 @@ tree::ReturnStatus tree::LearningSelectorStarNode::Tick()
         {
             if (child_i_status_ == tree::SUCCESS) //success
             {
-                child[current_child_index_]->set_status(tree::IDLE); //just to say that it's been completed
-                std::cout << current_child_index_ + 1 << "'th child of LearningSelectorStar returned SUCCESS. Going for other one" << std::endl;
-                current_child_index_ = 0;
+                if (current_child_index_ == (get_num_children() - 1))
+                {
+                    std::cout<<"Last child of SELECTORSTAR returned SUCCESS. Going for other one"<<std::endl;
+                    current_child_index_ = 0;
+                }
+                 else
+                {
+                    std::cout<<current_child_index_+1<<"'th child of SELECTORSTAR returned SUCCESS. Going for other one"<<std::endl;
+                    current_child_index_++;
+                }
+                // child[current_child_index_]->set_status(tree::IDLE); //just to say that it's been completed
+                // std::cout << current_child_index_ + 1 << "'th child of LearningSelectorStar returned SUCCESS. Going for other one" << std::endl;
+                // current_child_index_ = 0;
             }
             else //RUNNING
             {
-                child[current_child_index_]->set_status(child_i_status_);
+                child[returnedArray[current_child_index_]]->set_status(child_i_status_);
                 std::cout << current_child_index_ + 1 << "'th child of LearningSelectorStar returned RUNNING." << std::endl;
             }
             return child_i_status_;
@@ -136,8 +157,7 @@ int *tree::LearningSelectorStarNode::SortingArray(double array[][5], int actionA
         max_index = i;
         for (unsigned int j = i + 1; j < get_num_children(); j++)
         {
-
-            if (array[envObject->q_wayPointMap[current_state]][j] > array[envObject->q_wayPointMap[current_state]][max_index])
+            if (array[envObject->q_wayPointHeightDirectionMap[current_state]][j] > array[envObject->q_wayPointHeightDirectionMap[current_state]][max_index])
             {
                 max_index = j;
             }

@@ -21,12 +21,20 @@ using namespace std;
 int main()
 {
     
-    tree::BT bt("/uav1");
-
-    tree::Node* root = bt.buildBT("../files/BT_Fig8");
-    cout<<root->get_type()<<endl;
+    tree::BT bt1("/uav1");
     
-    bt.execute(root, 100000 );
+    tree::BT bt2("/uav2");
+
+    tree::Node* root = bt1.buildBT("../files/BT_Fig8");
+    
+    bt1.execute(root, 200000);
+
+
+    tree::Node* root_ = bt2.buildBT("../files/BT_Fig8");
+    
+    bt2.execute(root_, 200000);
+
+
 
     return 0;
 }

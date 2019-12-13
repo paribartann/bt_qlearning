@@ -29,13 +29,12 @@ namespace tree{
     {
         private:
             unsigned int current_child_index_;
-            Index current_state;
-            
             
         public:
             LearningSelectorStarNode(std::string key, unsigned int, EnvClass&);
             ReturnStatus Tick();
             EnvClass* envObject;
+            std::pair<Index, std::pair<int, EnvClass::direction>> current_state;
             int returnedArray[5] = {0, 1, 2, 3, 4};
             int* SortingArray(double[][5], int[]);
             int* getActionsArray(int[], double, int);
