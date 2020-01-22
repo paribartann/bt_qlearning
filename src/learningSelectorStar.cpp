@@ -62,15 +62,6 @@ tree::ReturnStatus tree::LearningSelectorStarNode::Tick()
         heightDirection.first = envObject->height;
         heightDirection.second = envObject->orientation;
        
-        current_state.first = envObject->currentWayPoint;
-        current_state.second = heightDirection;
-
-        cout<<envObject->q_wayPointHeightDirectionMap[current_state];
-        ///////////////////////////////////////////////////
-        //current_state = envObject->currentWayPoint; //observing the current state
-
-
-        //cout<<"X: "<<current_state.i<<" Y: "<s<current_state.j<<endl;
 
         int *returnedActionArray = getActionsArray(ActionIndexes, random_number, n); //get the action based on the random number generated
         for (unsigned int i = 0; i < get_num_children(); i++)
@@ -131,9 +122,6 @@ tree::ReturnStatus tree::LearningSelectorStarNode::Tick()
                     std::cout<<current_child_index_+1<<"'th child of SELECTORSTAR returned SUCCESS. Going for other one"<<std::endl;
                     current_child_index_++;
                 }
-                // child[current_child_index_]->set_status(tree::IDLE); //just to say that it's been completed
-                // std::cout << current_child_index_ + 1 << "'th child of LearningSelectorStar returned SUCCESS. Going for other one" << std::endl;
-                // current_child_index_ = 0;
             }
             else //RUNNING
             {
@@ -146,32 +134,29 @@ tree::ReturnStatus tree::LearningSelectorStarNode::Tick()
     return child_i_status_;
 }
 
-int *tree::LearningSelectorStarNode::SortingArray(double array[][5], int actionArray[])
+int *tree::LearningSelectorStarNode::SortingArray(map<std::tuple<Index, int, EnvClass::direction>, double*> myMap, int actionArray[])
 {
-
-    int max_index;
-    double index_val;
-
-    for (unsigned int i = 0; i < get_num_children() - 1; i++)
+    auto current_state_tuple = make_tuple(envObject->currentWayPoint, envObject->height, envObject->orientation);
+    unsigned int n = get_num_children();
+    for (unsigned int i = 0; i < n-1; i++)
     {
-        max_index = i;
-        for (unsigned int j = i + 1; j < get_num_children(); j++)
+        for (unsigned int j = 0; j < n-1-i; j++)
         {
-            if (array[envObject->q_wayPointHeightDirectionMap[current_state]][j] > array[envObject->q_wayPointHeightDirectionMap[current_state]][max_index])
+            
+            if (myMap[current_state_tuple][actionArray[j+1]] > myMap[current_state_tuple][actionArray[j]])
             {
-                max_index = j;
+                swap(&actionArray[j], &actionArray[j+1]);
             }
         }
-        index_val = actionArray[max_index];
-        actionArray[max_index] = actionArray[i];
-        actionArray[i] = index_val;
+        
+        
     }
     return actionArray;
 }
 
 int *tree::LearningSelectorStarNode::getActionsArray(int *arr, double random_number, int n)
 {
-
+    
     if (random_number < EPS)
     {
         cout << "RANDOM" << endl;
@@ -180,7 +165,7 @@ int *tree::LearningSelectorStarNode::getActionsArray(int *arr, double random_num
     else
     {
         cout << "SORTED" << endl;
-        return SortingArray(envObject->q_table, arr);
+        return SortingArray(envObject->dictQTable, arr);
     }
 }
 

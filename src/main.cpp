@@ -15,24 +15,41 @@
 
 #include "../include/tree.h"
 #include <iostream>
+#include <fstream>
+#include <string>
 
 using namespace std;
 
 int main()
 {
     
-    tree::BT bt1("/uav1");
+    ifstream infile("../files/waypoints1");
+    int num = 0;
+    infile >> num;  //number of elements
+    int wayp_array[num];
+    for (int i = 0; i < num; i++)
+    {
+        wayp_array[i] = 0;
+    }
     
-    tree::BT bt2("/uav2");
+    for (int i = 0; i < num; i++)
+    {
+        infile>>wayp_array[i];
+    }
+    
+    tree::BT bt1("/uav1", wayp_array);
+
+
+    // tree::BT bt2("/uav2");
 
     tree::Node* root = bt1.buildBT("../files/BT_Fig8");
     
     bt1.execute(root, 200000);
 
 
-    tree::Node* root_ = bt2.buildBT("../files/BT_Fig8");
+    // tree::Node* root_ = bt2.buildBT("../files/BT_Fig8");
     
-    bt2.execute(root_, 200000);
+    // bt2.execute(root_, 200000);
 
 
 

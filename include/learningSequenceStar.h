@@ -39,7 +39,8 @@ namespace tree{
             EnvClass* envObject;
             int returnedArray[5] = {0, 1, 2, 3, 4};
 
-            int* SortingArray(double[][5], int[]);
+            //int* SortingArray(double[][5], int[]);
+            int* SortingArray(std::map<std::tuple<Index, int, EnvClass::direction>, double*>, int[]);
             int* getActionsArray(int[], double, int);
             int* randomize (int arr[], int n);  
             void swap(int *a, int *b);

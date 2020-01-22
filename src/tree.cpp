@@ -36,9 +36,9 @@ int end_count = 0;
 namespace tree
 {
 
-BT::BT(std::string self)
+BT::BT(std::string self, int* wayp)
 {
-    envObject = new EnvClass(self);
+    envObject = new EnvClass(self, wayp);
 }
 
 tree::Node *BT::buildBT(const char *fileName)

@@ -28,7 +28,7 @@ namespace tree{
      {
         public:
             
-            BT(std::string str);   // constructor
+            BT(std::string str, int*);   // constructor
             ~BT() { delete envObject; }  // destructor   
  
             Node* buildBT(const char*);   // builds a Behavior Tree (BT) from a given file and returns the pointer to its root node

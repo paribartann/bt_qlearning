@@ -15,6 +15,7 @@
 #ifndef ENV_H
 #define ENV_H
 
+#include <tuple>
 #include <map>
 #include <string>
 #include <utility>
@@ -36,42 +37,52 @@ struct Index {
 
 class EnvClass {
  private:
-  char env[10][10];
+  char env[10][10];                                          //environment array
 
-  std::map<int, std::string> actionNameMap;
+  std::map<int, std::string> actionNameMap;                  //mapping the index with action name for output
+                                                             // purpose only
 
 
-  int count;  // this is needed to maintain the intersection of the visible
-              // blocks
+  int count;                                                 // this is needed to maintain the intersection 
+                                                             // of the visible blocks
 
-  bool targetVisible;
+  bool targetVisible;                                        //sets true if we can see the target  
 
-  std::string self_id_;
+  std::string self_id_;                                      //id associated with each drone (for generalment)
 
  public:
-  enum direction { EAST, SOUTH, WEST, NORTH };
-  int height;
-  EnvClass(std::string self_id);  // constructor
+  enum direction { EAST, SOUTH, WEST, NORTH };               //orientation of the drone
+  int height;                                                //height of the drone
+  EnvClass(std::string self_id, int*);                             // constructor
 
-  direction orientation;
+  direction orientation;                                     //variable of direction enum
 
-  std::map<int, Index> wayPointMap;
-  std::map<Index, int> q_wayPointMap;
+  std::map<int, Index> wayPointMap;                          //maps waypoint index with its corresponding co-efficient
 
-  std::pair<int, direction> heightDirection;
+  std::map<Index, int> q_wayPointMap;                        //previously need for learningSequenceStar.cpp
+  std::pair<int, direction> heightDirection;                 //this is required for q_wayPointHeightDirectionMap
   std::pair<Index, std::pair<int, direction>> wayPointHeightDirection;
-  std::map<std::pair<Index, std::pair<int, direction>>, int>
-      q_wayPointHeightDirectionMap;
+  std::map<std::pair<Index, std::pair<int, direction>>, int> // maps the pair of coordinates, orientaion
+      q_wayPointHeightDirectionMap;                          // and height with the q-table index
+
+
+
+
+  std::map<std::tuple<Index, int, direction>, double*> dictQTable;
+  
+  void qDictTableUpdate(Index, unsigned int, int, Index, int, direction, int, direction);
 
   // 5 waypoints * 4 directions * 2 heights = 40 states
   // 5 actions
-  double q_table[40][5];
+  //double q_table[40][5];                                     // pre-defined q-table for now
+
+  
 
   std::vector<Index> visibleBlockFunction(Index, direction,
-                                          int);  // a lookup table that returns
-                                                 // all the visible blocks from
-                                                 // a certain orientation,
-                                                 // height, and a location
+                                          int);             // a lookup table that returns
+                                                            // all the visible blocks from
+                                                            // a certain orientation,
+                                                            // height, and a location
 
   Index initialWayPoint;
   Index currentWayPoint;
@@ -91,18 +102,18 @@ class EnvClass {
 
   bool reset;
 
-  int index;  // for random index
-  /****************action*********************/
+  int index;                                                 // for random index
+  /****************   action   **********************/
   ReturnStatus rotate();
   ReturnStatus elevate();
   ReturnStatus de_elevate();
   ReturnStatus waypoint_translation();
   ReturnStatus end_episode();
-  /****************endOfAction*********************/
+  /**************** endOfAction *********************/
 
   Index prevWaypoint;
 
-  // condition
+                                                            // condition
   ReturnStatus is_target_visible();
 
   // utility function for mapping a function with its string value(gotten from a
@@ -110,14 +121,14 @@ class EnvClass {
   ReturnStatus call_function(std::string);
   ReturnStatus call_condition(std::string);
 
-  bool isTargetThere();  // calls a visibleBlock function and checks if target
-                         // is present in the returned indexes.
+  bool isTargetThere();                                     // calls a visibleBlock function and checks if target
+                                                            // is present in the returned indexes.
 
-  double findMaxQValue(int);  // takes in waypoint (0-4) and action (0,4)
-  void settingEnvironment();
-  void initialiseQTableMap();
+ 
+  double findMaxQValueDict(Index, int, direction);
+  void settingEnvironment(int* wayp);
   void printEnvironment();
-  void printQTable();
+  void printQTableDict();
 };
 
 }  // namespace tree

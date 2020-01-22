@@ -16,9 +16,11 @@
 #define ALPHA 0.1
 #define GAMMA 0.9
 
+#include "../include/env.h"
 #include <iostream>
 #include <random>
-#include "../include/env.h"
+#include <tuple>
+
 
 using namespace std;
 using namespace tree;
@@ -28,10 +30,10 @@ std::ostream &operator<<(std::ostream &os, const Index &pt)
     return os << "[" << pt.i << ", " << pt.j << "]";
 }
 
-EnvClass::EnvClass(std::string self_id)
+EnvClass::EnvClass(std::string self_id, int* wayp_array)
 { //CONSTRUCTOR
 
-    settingEnvironment();
+    settingEnvironment(wayp_array);
 
     self_id_ = self_id;
 
@@ -63,21 +65,39 @@ EnvClass::EnvClass(std::string self_id)
     previous_action = 0;
 }
 
-void EnvClass::settingEnvironment()
+void EnvClass::qDictTableUpdate(Index lv, unsigned int la, int r, Index cv, int height, direction orientation,
+                             int next_height, direction next_orientaion) {
+
+    auto lv_tuple = make_tuple(lv, height, orientation);
+    auto cv_tuple = make_tuple(cv, next_height, next_orientaion);
+
+    if ( dictQTable.count(lv_tuple) == 0 ) {
+        dictQTable[lv_tuple] = new double[NUMBER_OF_ACTIONS];
+        for (int i = 0; i < NUMBER_OF_ACTIONS; i++) {
+            dictQTable[lv_tuple][i] = 0.0;
+        }
+    }
+    if ( dictQTable.count(cv_tuple) == 0 ) {
+        dictQTable[cv_tuple] = new double[NUMBER_OF_ACTIONS];
+        for (int i = 0; i < NUMBER_OF_ACTIONS; i++) {
+            dictQTable[cv_tuple][i] = 0.0;
+        }
+    }
+
+    double delta = r + GAMMA * findMaxQValueDict(cv, next_height, next_orientaion) - dictQTable[lv_tuple][la];
+
+    dictQTable[lv_tuple][la] += ALPHA * delta;
+
+}
+
+
+void EnvClass::settingEnvironment(int * wayp)
 {
     for (int i = 0; i < 10; i++)
     {
         for (int j = 0; j < 10; j++)
         {
             env[i][j] = '0';
-        }
-    }
-
-    for (int i = 0; i < 40; i++)
-    {
-        for (int j = 0; j < 5; j++)
-        {
-            q_table[i][j] = 0.0;
         }
     }
 
@@ -91,22 +111,30 @@ void EnvClass::settingEnvironment()
     env[2][6] = 'X';
     env[0][9] = 'X';
 
-    //these are the waitpoints
-    wayPointMap[0] = Index(6, 2);
-    wayPointMap[1] = Index(3, 2);
-    wayPointMap[2] = Index(0, 6);
-    wayPointMap[3] = Index(3, 8);
-    wayPointMap[4] = Index(5, 7);
+    //these are the waypoints (mapping index to the coordinates)
+    // wayPointMap[0] = Index(6, 2);
+    // wayPointMap[1] = Index(3, 2);
+    // wayPointMap[2] = Index(0, 6);
+    // wayPointMap[3] = Index(3, 8);
+    // wayPointMap[4] = Index(5, 7);
 
-    initialiseQTableMap();
+    wayPointMap[0] = Index(wayp[0], wayp[1]);
+    wayPointMap[1] = Index(wayp[2], wayp[3]);
+    wayPointMap[2] = Index(wayp[4], wayp[5]);
+    wayPointMap[3] = Index(wayp[6], wayp[7]);
+    wayPointMap[4] = Index(wayp[8], wayp[9]);
+
+    
 
 
+    //mapping actions's index to its name for printing purpose
     actionNameMap[0] = "RotateA";
     actionNameMap[1] = "elevate";
     actionNameMap[2] = "RotateB";
     actionNameMap[3] = "de-elevate";
     actionNameMap[4] = "wayPointTranslate";
 
+    //just giving numbering to the waypoints in our 10X10 array
     env[6][2] = '1';
     env[3][2] = '2';
     env[0][6] = '3';
@@ -156,22 +184,12 @@ ReturnStatus EnvClass::end_episode()
         wayP = currentWayPoint;
     }
 
-    //this is for the wayP and current action/////////
-    heightDirection.first = height;
-    heightDirection.second = orientation;
-    std::pair<Index, std::pair<int,direction>> state;
-    state.first = wayP;
-    state.second = heightDirection;
-
-    //cout<<q_wayPointHeightDirectionMap[state];
-    ///////////////////////////////////////////////////
+    auto update_tuple = make_tuple(wayP, height, orientation);
+   
 
     cout << "Updating the q-table of  WAYPOINT == " << wayP.i << " " << wayP.j << endl;
 
-    q_table[q_wayPointHeightDirectionMap[state]][current_action] += ALPHA * (10 - q_table[q_wayPointHeightDirectionMap[state]][current_action]);
-
-
-    //q_table[q_wayPointMap[wayP]][current_action] += ALPHA * (10 - q_table[q_wayPointMap[currentWayPoint]][previous_action]);
+    dictQTable[update_tuple][current_action] += ALPHA * (10 - dictQTable[update_tuple][current_action]);
 
     //setting the waypoint to its initial value here
     currentWayPoint = initialWayPoint;
@@ -194,7 +212,7 @@ ReturnStatus EnvClass::end_episode()
 
     reset = true;
 
-    printQTable();
+    printQTableDict();
 
     return SUCCESS;
 }
@@ -224,40 +242,12 @@ ReturnStatus EnvClass::rotate()
 
     /* Q-Learning Code Goes here */
 
-    //this is the previous state before the orientaion is changed/////////
-    cout<<"PREV ORI = "<<prev_orientation<<endl;
-    heightDirection.first = height;
-    heightDirection.second = prev_orientation;
-    std::pair<Index, std::pair<int,direction>> prev_state;
-    prev_state.first = currentWayPoint;
-    prev_state.second = heightDirection;
-
-    cout<<"Updating STATE = "<<q_wayPointHeightDirectionMap[prev_state]<<endl;
-    ///////////////////////////////////////////////////
-
-
-    //this is next state after the orientation is changed/////////
-    cout<<"NEW ORI = "<<orientation<<endl;
-    heightDirection.first = height;
-    heightDirection.second = orientation;
-    std::pair<Index, std::pair<int,direction>> new_state;
-    new_state.first = currentWayPoint;
-    new_state.second = heightDirection;
-
-    cout<<"New STATE = "<<q_wayPointHeightDirectionMap[new_state]<<endl;
-
-
-    
-    ///////////////////////////////////////////////////
-
-    
     cout << "Updating the q-table of  WAYPOINT in rotate == " << currentWayPoint.i << " " << currentWayPoint.j << " and action is " << current_action << endl;
 
-    q_table[q_wayPointHeightDirectionMap[prev_state]][current_action] +=
-        ALPHA * (0 + GAMMA * findMaxQValue(q_wayPointHeightDirectionMap[new_state]) - q_table[q_wayPointHeightDirectionMap[prev_state]][current_action]);
+    qDictTableUpdate(currentWayPoint, current_action, 0, currentWayPoint, height, prev_orientation, height, orientation);
 
-   
-    printQTable();
+    
+    printQTableDict();
     return rotate_status;
 }
 
@@ -271,35 +261,10 @@ ReturnStatus EnvClass::elevate()
     cout << "Current Drone's Height is:" << (height == 1 ? "high" : "low") << endl;
     cout << "Updating the q-table of  WAYPOINT in elevate == " << currentWayPoint.i << " " << currentWayPoint.j << " and action is " << current_action << endl;
 
-
-
-    ////this is the state before the height is changed//
-    heightDirection.first = prev_height;
-    heightDirection.second = orientation;
-    std::pair<Index, std::pair<int,direction>> prev_state;
-    prev_state.first = currentWayPoint;
-    prev_state.second = heightDirection;
-
-    cout<<q_wayPointHeightDirectionMap[prev_state];
-    ///////////////////////////////////////////////////
-
-
-    //this is the next state after the height is changed/////////
-    heightDirection.first = height;
-    heightDirection.second = orientation;
-    std::pair<Index, std::pair<int,direction>> new_state;
-    new_state.first = currentWayPoint;
-    new_state.second = heightDirection;
-
-    cout<<q_wayPointHeightDirectionMap[new_state];
-    /////////////////////////////////////////////////////////////
     
+    qDictTableUpdate(currentWayPoint, current_action, 0, currentWayPoint, prev_height, orientation, height, orientation);
 
-    q_table[q_wayPointHeightDirectionMap[prev_state]][current_action] +=
-        ALPHA * (0 + GAMMA * findMaxQValue(q_wayPointHeightDirectionMap[new_state]) - q_table[q_wayPointHeightDirectionMap[prev_state]][current_action]);
-
-    
-    printQTable();
+    printQTableDict();
     return SUCCESS;
 }
 
@@ -313,34 +278,11 @@ tree::ReturnStatus EnvClass::de_elevate()
 
     cout << "Current Drone's Height is:" << (height == 1 ? "high" : "low") << endl;
 
-    cout << "Updating the q-table of  WAYPOINT in de-elevate == " << currentWayPoint.i << " " << currentWayPoint.j << " and action is " << current_action << endl;
+    cout << "Updating the q-table of  WAYPOINT in de-elevate == " << currentWayPoint.i << " " << currentWayPoint.j << " and action is " << current_action << endl;    
 
-   //this is the state before the height is changed/////////
-    heightDirection.first = prev_height;
-    heightDirection.second = orientation;
-    std::pair<Index, std::pair<int,direction>> prev_state;
-    prev_state.first = currentWayPoint;
-    prev_state.second = heightDirection;
+    qDictTableUpdate(currentWayPoint, current_action, 0, currentWayPoint, prev_height, orientation, height, orientation);
 
-    cout<<q_wayPointHeightDirectionMap[prev_state];
-    ///////////////////////////////////////////////////
-
-
-    //this is the next state after the height is changed/////////
-    heightDirection.first = height;
-    heightDirection.second = orientation;
-    std::pair<Index, std::pair<int,direction>> new_state;
-    new_state.first = currentWayPoint;
-    new_state.second = heightDirection;
-
-    cout<<q_wayPointHeightDirectionMap[new_state];
-  /////////////////////////////////////////////////////
-    
-
-    q_table[q_wayPointHeightDirectionMap[prev_state]][current_action] +=
-        ALPHA * (0 + GAMMA * findMaxQValue(q_wayPointHeightDirectionMap[new_state]) - q_table[q_wayPointHeightDirectionMap[prev_state]][current_action]);
-
-    printQTable();
+    printQTableDict();
     return SUCCESS;
 }
 
@@ -352,7 +294,6 @@ ReturnStatus EnvClass::waypoint_translation()
     cout << "Previous Location: "
          << "(" << currentWayPoint.i << ", " << currentWayPoint.j << ")\n";
 
-    //int index = 4;
     prevWaypoint = currentWayPoint; //saving the current waypoint
     if ((currentWayPoint.i == wayPointMap[0].i) && (currentWayPoint.j == wayPointMap[0].j))
     {
@@ -375,32 +316,9 @@ ReturnStatus EnvClass::waypoint_translation()
         currentWayPoint = wayPointMap[0];
     }
 
-    //this is for the wayP and current action/////////
-    heightDirection.first = height;
-    heightDirection.second = orientation;
-    std::pair<Index, std::pair<int,direction>> prev_state;
-    prev_state.first = prevWaypoint;
-    prev_state.second = heightDirection;
+    qDictTableUpdate(prevWaypoint, current_action, 0, currentWayPoint, height, orientation, height, orientation);
 
-    cout<<q_wayPointHeightDirectionMap[prev_state];
-    ///////////////////////////////////////////////////
-
-
-    //this is for the wayP and current action/////////
-    heightDirection.first = height;
-    heightDirection.second = orientation;
-    std::pair<Index, std::pair<int,direction>> new_state;
-    new_state.first = currentWayPoint;
-    new_state.second = heightDirection;
-
-    cout<<q_wayPointHeightDirectionMap[new_state];
-    ///////////////////////////////////////////////////
-
-    q_table[q_wayPointHeightDirectionMap[prev_state]][current_action] +=
-        ALPHA * (0 + GAMMA * findMaxQValue(q_wayPointHeightDirectionMap[new_state]) - q_table[q_wayPointHeightDirectionMap[prev_state]][current_action]);
-
-
-    printQTable();
+    printQTableDict();
     return SUCCESS;
 }
 
@@ -1658,18 +1576,20 @@ vector<Index> EnvClass::visibleBlockFunction(Index index, direction orientation,
     return visibleBlocks;
 }
 
-double EnvClass::findMaxQValue(int state)
-{
-    double max_val = q_table[state][0];
-    //cout<<"NUM_ACTIONS == "<<NUM_ACTIONS<<endl;
+
+double EnvClass::findMaxQValueDict(Index cv, int n_h, direction n_o) {
+
+    auto state = make_tuple(cv, n_h, n_o);
+    double max_val = dictQTable[state][0];
     for (int i = 1; i < NUMBER_OF_ACTIONS; i++)
     {
-        if (max_val < q_table[state][i])
+        if (max_val < dictQTable[state][i])
         {
-            max_val = q_table[state][i];
+            max_val = dictQTable[state][i];
         }
     }
     return max_val;
+
 }
 
 void EnvClass::printEnvironment()
@@ -1688,297 +1608,16 @@ void EnvClass::printEnvironment()
          << endl;
 }
 
-void EnvClass::printQTable()
-{
-    cout << "\n";
-
-    cout << "Q_TABLE :::" << endl;
-    for (int i = 0; i < 40; i++)
+void EnvClass::printQTableDict() {
+    cout<<"********QTABLEDICT*********"<<endl;
+    for (auto& t : dictQTable)
     {
-        for (int j = 0; j < 5; j++)
+        std::cout << get<0>(t.first) << " " <<get<1>(t.first)<< " "<< get<2>(t.first)<<"   = ";
+        for (int i = 0; i < NUMBER_OF_ACTIONS; i++ )
         {
-            cout << q_table[i][j] << " ";
+            cout<< (t.second)[i] << " ";
         }
-        cout << endl;
-        if(i % 4 == 3) cout<<endl;
-        if(i % 8 == 7) cout<<endl<<endl;
+        cout<<"\n"; 
     }
-    cout << endl
-         << endl;
 }
 
-
-void EnvClass::initialiseQTableMap()
-{
-
-
-    //Index(6,2)
-    heightDirection.first = 0;      //height = low
-    heightDirection.second = EAST;     //direction = east
-    wayPointHeightDirection.first = Index(6,2);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 0;
-
-    heightDirection.first = 0;      //height = low
-    heightDirection.second = SOUTH;     //direction = south
-    wayPointHeightDirection.first = Index(6,2);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 1;
-
-
-    heightDirection.first = 0;      //height = low
-    heightDirection.second = WEST;     //direction = west
-    wayPointHeightDirection.first = Index(6,2);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 2;
-
-    heightDirection.first = 0;      //height = low
-    heightDirection.second = NORTH;     //direction = north
-    wayPointHeightDirection.first = Index(6,2);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 3;
-
-
-    //height = high
-    heightDirection.first = 1;      //height = high
-    heightDirection.second = EAST;     //direction = east
-    wayPointHeightDirection.first = Index(6,2);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 4;
-
-    heightDirection.first = 1;      //height = high
-    heightDirection.second = SOUTH;     //direction = south
-    wayPointHeightDirection.first = Index(6,2);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 5;
-
-
-    heightDirection.first = 1;      //height = high
-    heightDirection.second = WEST;     //direction = west
-    wayPointHeightDirection.first = Index(6,2);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 6;
-
-    heightDirection.first = 1;      //height = high
-    heightDirection.second = NORTH;     //direction = north
-    wayPointHeightDirection.first = Index(6,2);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 7;
-
-
-    //Index(3,2)
-    heightDirection.first = 0;      //height = low
-    heightDirection.second = EAST;     //direction = east
-    wayPointHeightDirection.first = Index(3,2);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 8;
-
-    heightDirection.first = 0;      //height = low
-    heightDirection.second = SOUTH;     //direction = south
-    wayPointHeightDirection.first = Index(3,2);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 9;
-
-
-    heightDirection.first = 0;      //height = low
-    heightDirection.second = WEST;     //direction = west
-    wayPointHeightDirection.first = Index(3,2);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 10;
-
-    heightDirection.first = 0;      //height = low
-    heightDirection.second = NORTH;     //direction = north
-    wayPointHeightDirection.first = Index(3,2);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 11;
-
-
-    //height = high
-    heightDirection.first = 1;      //height = high
-    heightDirection.second = EAST;     //direction = east
-    wayPointHeightDirection.first = Index(3,2);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 12;
-
-    heightDirection.first = 1;      //height = high
-    heightDirection.second = SOUTH;     //direction = south
-    wayPointHeightDirection.first = Index(3,2);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 13;
-
-
-    heightDirection.first = 1;      //height = high
-    heightDirection.second = WEST;     //direction = west
-    wayPointHeightDirection.first = Index(3,2);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 14;
-
-    heightDirection.first = 1;      //height = high
-    heightDirection.second = NORTH;     //direction = north
-    wayPointHeightDirection.first = Index(3,2);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 15;
-
-
-    //Index(0,6)
-
-    heightDirection.first = 0;      //height = low
-    heightDirection.second = EAST;     //direction = east
-    wayPointHeightDirection.first = Index(0,6);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 16;
-
-    heightDirection.first = 0;      //height = low
-    heightDirection.second = SOUTH;     //direction = south
-    wayPointHeightDirection.first = Index(0,6);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 17;
-
-
-    heightDirection.first = 0;      //height = low
-    heightDirection.second = WEST;     //direction = west
-    wayPointHeightDirection.first = Index(0,6);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 18;
-
-    heightDirection.first = 0;      //height = low
-    heightDirection.second = NORTH;     //direction = north
-    wayPointHeightDirection.first = Index(0,6);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 19;
-
-
-    //height = high
-    heightDirection.first = 1;      //height = high
-    heightDirection.second = EAST;     //direction = east
-    wayPointHeightDirection.first = Index(0,6);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 20;
-
-    heightDirection.first = 1;      //height = high
-    heightDirection.second = SOUTH;     //direction = south
-    wayPointHeightDirection.first = Index(0,6);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 21;
-
-
-    heightDirection.first = 1;      //height = high
-    heightDirection.second = WEST;     //direction = west
-    wayPointHeightDirection.first = Index(0,6);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 22;
-
-    heightDirection.first = 1;      //height = high
-    heightDirection.second = NORTH;     //direction = north
-    wayPointHeightDirection.first = Index(0,6);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 23;
-
-
-    //Index(3,8)
-
-    heightDirection.first = 0;      //height = low
-    heightDirection.second = EAST;     //direction = east
-    wayPointHeightDirection.first = Index(3,8);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 24;
-
-    heightDirection.first = 0;      //height = low
-    heightDirection.second = SOUTH;     //direction = south
-    wayPointHeightDirection.first = Index(3,8);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 25;
-
-
-    heightDirection.first = 0;      //height = low
-    heightDirection.second = WEST;     //direction = west
-    wayPointHeightDirection.first = Index(3,8);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 26;
-
-    heightDirection.first = 0;      //height = low
-    heightDirection.second = NORTH;     //direction = north
-    wayPointHeightDirection.first = Index(3,8);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 27;
-
-    //height = high
-    heightDirection.first = 1;      //height = high
-    heightDirection.second = EAST;     //direction = east
-    wayPointHeightDirection.first = Index(3,8);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 28;
-
-    heightDirection.first = 1;      //height = high
-    heightDirection.second = SOUTH;     //direction = south
-    wayPointHeightDirection.first = Index(3,8);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 29;
-
-
-    heightDirection.first = 1;      //height = high
-    heightDirection.second = WEST;     //direction = west
-    wayPointHeightDirection.first = Index(3,8);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 30;
-
-    heightDirection.first = 1;      //height = high
-    heightDirection.second = NORTH;     //direction = north
-    wayPointHeightDirection.first = Index(3,8);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 31; 
-
-    //Index(5,7)
-    heightDirection.first = 0;      //height = low
-    heightDirection.second = EAST;     //direction = east
-    wayPointHeightDirection.first = Index(5,7);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 32;
-
-    heightDirection.first = 0;      //height = low
-    heightDirection.second = SOUTH;     //direction = south
-    wayPointHeightDirection.first = Index(5,7);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 33;
-
-
-    heightDirection.first = 0;      //height = low
-    heightDirection.second = WEST;     //direction = west
-    wayPointHeightDirection.first = Index(5,7);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 34;
-
-    heightDirection.first = 0;      //height = low
-    heightDirection.second = NORTH;     //direction = north
-    wayPointHeightDirection.first = Index(5,7);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 35;
-
-
-    //height = high
-    heightDirection.first = 1;      //height = high
-    heightDirection.second = EAST;     //direction = east
-    wayPointHeightDirection.first = Index(5,7);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 36;
-
-    heightDirection.first = 1;      //height = high
-    heightDirection.second = SOUTH;     //direction = south
-    wayPointHeightDirection.first = Index(5,7);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 37;
-
-
-    heightDirection.first = 1;      //height = high
-    heightDirection.second = WEST;     //direction = west
-    wayPointHeightDirection.first = Index(5,7);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 38;
-
-    heightDirection.first = 1;      //height = high
-    heightDirection.second = NORTH;     //direction = north
-    wayPointHeightDirection.first = Index(5,7);
-    wayPointHeightDirection.second = heightDirection;
-    q_wayPointHeightDirectionMap[wayPointHeightDirection] = 39; 
-
-}
